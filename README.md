@@ -8,9 +8,9 @@ An easy to use IoC Container that takes its inspiration from <a href="https://gi
 </p>
 
 <p align="center">
-<img alt="GitHub" src="https://img.shields.io/github/workflow/status/CKATEPTb-commons/TableclothContainer/Publish/production">
-<a href="#Download"><img src="https://img.shields.io/nexus/s/dev.ckateptb.common/TableclothContainer?label=repo&server=https://repo.animecraft.fun" alt="repo"></a>
-<img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/ckateptb-commons/TableclothContainer/publish?branch=production">
+<img alt="License" src="https://img.shields.io/github/license/CKATEPTb-commons/TableclothContainer">
+<a href="#Download"><img alt="Sonatype Nexus (Snapshots)" src="https://img.shields.io/nexus/s/dev.ckateptb.common/TableclothContainer?label=repo&server=https://repo.animecraft.fun/"></a>
+<img alt="Publish" src="https://img.shields.io/github/workflow/status/CKATEPTb-commons/TableclothContainer/Publish/production">
 <a href="https://docs.gradle.org/7.5/release-notes.html"><img src="https://img.shields.io/badge/Gradle-7.5-brightgreen.svg?colorB=469C00&logo=gradle"></a>
 <a href="https://discord.gg/P7FaqjcATp" target="_blank"><img alt="Discord" src="https://img.shields.io/discord/925686623222505482?label=discord"></a>
 </p>
