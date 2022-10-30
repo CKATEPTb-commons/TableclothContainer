@@ -28,6 +28,7 @@ We use [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) to manag
 - [X] Easy to include
 - [X] Multiple instances
 - [X] Custom package filter
+- [X] [TableclothEvent](https://github.com/CKATEPTb-commons/TableclothEvent) support
 - [ ] Documented
 
 # Download
@@ -54,3 +55,4 @@ dependencies {
 * Annotate parameter as `@Qualifier("<instance-name>")` if you should use other instance in constructor
 * Annotate class as `@Component` if you should to auto-inject this class instance to container
 * Need more? Look `Container` class
+* Need info about events? Look `event` package
