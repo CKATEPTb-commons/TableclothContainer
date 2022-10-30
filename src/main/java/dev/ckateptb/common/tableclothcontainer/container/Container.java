@@ -5,10 +5,12 @@ import dev.ckateptb.common.tableclothcontainer.annotation.Autowired;
 import dev.ckateptb.common.tableclothcontainer.annotation.Component;
 import dev.ckateptb.common.tableclothcontainer.annotation.PostConstruct;
 import dev.ckateptb.common.tableclothcontainer.annotation.Qualifier;
+import dev.ckateptb.common.tableclothcontainer.event.ComponentRegisterEvent;
 import dev.ckateptb.common.tableclothcontainer.exception.ComponentNotFoundException;
 import dev.ckateptb.common.tableclothcontainer.exception.CircularException;
 import dev.ckateptb.common.tableclothcontainer.exception.ComponentConstructorNotFoundException;
 import dev.ckateptb.common.tableclothcontainer.util.FinderUtil;
+import dev.ckateptb.common.tableclothevent.EventBus;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Constructor;
@@ -20,6 +22,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Container {
+    private static boolean tableclothEventIsPresent = false;
+    static {
+        try {
+            Class.forName("dev.ckateptb.common.tableclothevent.EventBus");
+            tableclothEventIsPresent = true;
+        } catch (ClassNotFoundException ignored) {
+        }
+    }
     private final Map<Class<?>, Set<BeanComponent<?>>> beans = new HashMap<>();
     private final Map<Class<?>, Set<CircularPreventTree<Class<?>>>> circularPreventTree = new HashMap<>();
 
@@ -76,6 +86,10 @@ public class Container {
         BeanComponent<T> beanComponent = new BeanComponent<>(identifier, instanceClass, instance);
         beanComponent.setParent(instanceClass);
         this.beans.computeIfAbsent(instanceClass, (key) -> new HashSet<>()).add(beanComponent);
+        if(tableclothEventIsPresent) {
+            ComponentRegisterEvent<T> event = new ComponentRegisterEvent<>(this, instanceClass, identifier, instance);
+            EventBus.GLOBAL.dispatchEvent(event);
+        }
         return beanComponent;
     }
 

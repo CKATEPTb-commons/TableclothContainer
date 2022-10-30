@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "dev.ckateptb.common"
-version = "1.0.0-SNAPSHOT"
+version = "1.1.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase()}"
 val internal = "${rootPackage}.internal"
@@ -28,6 +28,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly("dev.ckateptb.common:TableclothEvent:+")
     implementation("com.google.guava:guava:31.1-jre")
 
     compileOnly("org.projectlombok:lombok:1.18.22")
