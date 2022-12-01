@@ -110,7 +110,7 @@ public class Container {
             T returnResult = null;
             boolean cancelled = false;
             if (tableclothEventIsPresent) {
-                ThrowComponentNotFoundExceptionEvent<T> event = new ThrowComponentNotFoundExceptionEvent<>(beanClass, identifier);
+                ThrowComponentNotFoundExceptionEvent<T> event = new ThrowComponentNotFoundExceptionEvent<>(this, beanClass, identifier);
                 EventBus.GLOBAL.dispatchEvent(event);
                 cancelled = event.isCanceled();
                 returnResult = event.getReturnResult();
