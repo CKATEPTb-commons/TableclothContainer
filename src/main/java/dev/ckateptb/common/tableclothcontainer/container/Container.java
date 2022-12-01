@@ -6,9 +6,10 @@ import dev.ckateptb.common.tableclothcontainer.annotation.Component;
 import dev.ckateptb.common.tableclothcontainer.annotation.PostConstruct;
 import dev.ckateptb.common.tableclothcontainer.annotation.Qualifier;
 import dev.ckateptb.common.tableclothcontainer.event.ComponentRegisterEvent;
-import dev.ckateptb.common.tableclothcontainer.exception.ComponentNotFoundException;
+import dev.ckateptb.common.tableclothcontainer.event.ThrowComponentNotFoundExceptionEvent;
 import dev.ckateptb.common.tableclothcontainer.exception.CircularException;
 import dev.ckateptb.common.tableclothcontainer.exception.ComponentConstructorNotFoundException;
+import dev.ckateptb.common.tableclothcontainer.exception.ComponentNotFoundException;
 import dev.ckateptb.common.tableclothcontainer.util.FinderUtil;
 import dev.ckateptb.common.tableclothevent.EventBus;
 import lombok.SneakyThrows;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 
 public class Container {
     private static boolean tableclothEventIsPresent = false;
+
     static {
         try {
             Class.forName("dev.ckateptb.common.tableclothevent.EventBus");
@@ -30,6 +32,7 @@ public class Container {
         } catch (ClassNotFoundException ignored) {
         }
     }
+
     private final Map<Class<?>, Set<BeanComponent<?>>> beans = new HashMap<>();
     private final Map<Class<?>, Set<CircularPreventTree<Class<?>>>> circularPreventTree = new HashMap<>();
 
@@ -38,7 +41,7 @@ public class Container {
     }
 
     public void scan(Class<?> parentClass, Predicate<String> filter, String... packages) {
-        this.scan(parentClass, classInfoName -> true, null, packages);
+        this.scan(parentClass, filter, null, packages);
     }
 
     @SneakyThrows
@@ -81,12 +84,13 @@ public class Container {
         return this.registerBean(bean, "");
     }
 
+    @SuppressWarnings("unchecked")
     public <T> BeanComponent<T> registerBean(T instance, String identifier) {
         Class<T> instanceClass = (Class<T>) instance.getClass();
         BeanComponent<T> beanComponent = new BeanComponent<>(identifier, instanceClass, instance);
         beanComponent.setParent(instanceClass);
         this.beans.computeIfAbsent(instanceClass, (key) -> new HashSet<>()).add(beanComponent);
-        if(tableclothEventIsPresent) {
+        if (tableclothEventIsPresent) {
             ComponentRegisterEvent<T> event = new ComponentRegisterEvent<>(this, instanceClass, identifier, instance);
             EventBus.GLOBAL.dispatchEvent(event);
         }
@@ -103,7 +107,19 @@ public class Container {
                     .filter(beanComponent -> beanComponent.getIdentifier().equals(identifier))
                     .findFirst().map(BeanComponent::getInstance).orElseThrow();
         } catch (NullPointerException | NoSuchElementException exception) {
-            throw new ComponentNotFoundException(String.format("Bean %s (%s) is missing", beanClass, identifier));
+            T returnResult = null;
+            boolean cancelled = false;
+            if (tableclothEventIsPresent) {
+                ThrowComponentNotFoundExceptionEvent<T> event = new ThrowComponentNotFoundExceptionEvent<>(beanClass, identifier);
+                EventBus.GLOBAL.dispatchEvent(event);
+                cancelled = event.isCanceled();
+                returnResult = event.getReturnResult();
+            }
+            if (!cancelled) {
+                throw new ComponentNotFoundException(String.format("Bean %s (%s) is missing", beanClass, identifier));
+            } else {
+                return returnResult;
+            }
         }
     }
 
@@ -132,6 +148,7 @@ public class Container {
         return beanComponentSet.stream();
     }
 
+    @SuppressWarnings("unchecked")
     private <T> Stream<BeanComponent<T>> getBeanWrappers(Class<T> beanClass) {
         if (this.beans.containsKey(beanClass)) {
             Set<BeanComponent<?>> beanComponentSet = this.beans.get(beanClass);
@@ -143,6 +160,7 @@ public class Container {
         return Stream.empty();
     }
 
+    @SuppressWarnings("unchecked")
     private <T> Constructor<?> getDefaultConstructor(Class<T> clazz) {
         Constructor<T> defaultConstructor = FinderUtil.findAnnotatedConstructor(clazz, Autowired.class);
         if (defaultConstructor == null) {
@@ -162,7 +180,7 @@ public class Container {
 
     private void declareNewInstanceGenerator(Class<?> clazz, String identifier, Class<?> parentClass) {
         Component component = clazz.getAnnotation(Component.class);
-        identifier = Optional.ofNullable(identifier).orElse(component.value());
+        identifier = Optional.ofNullable(identifier).orElse(component == null ? "" : component.value());
         if (this.containsBean(clazz, identifier)) return;
         CircularPreventTree<Class<?>> tree = new CircularPreventTree<>(parentClass, clazz, identifier);
         String finalIdentifier = identifier;
