@@ -6,6 +6,7 @@ import dev.ckateptb.common.tableclothcontainer.annotation.Component;
 import dev.ckateptb.common.tableclothcontainer.annotation.PostConstruct;
 import dev.ckateptb.common.tableclothcontainer.annotation.Qualifier;
 import dev.ckateptb.common.tableclothcontainer.event.ComponentRegisterEvent;
+import dev.ckateptb.common.tableclothcontainer.event.ThrowComponentNotFoundExceptionEvent;
 import dev.ckateptb.common.tableclothcontainer.exception.CircularException;
 import dev.ckateptb.common.tableclothcontainer.exception.ComponentConstructorNotFoundException;
 import dev.ckateptb.common.tableclothcontainer.exception.ComponentNotFoundException;
@@ -106,7 +107,19 @@ public class Container {
                     .filter(beanComponent -> beanComponent.getIdentifier().equals(identifier))
                     .findFirst().map(BeanComponent::getInstance).orElseThrow();
         } catch (NullPointerException | NoSuchElementException exception) {
-            throw new ComponentNotFoundException(String.format("Bean %s (%s) is missing", beanClass, identifier));
+            T returnResult = null;
+            boolean cancelled = false;
+            if (tableclothEventIsPresent) {
+                ThrowComponentNotFoundExceptionEvent<T> event = new ThrowComponentNotFoundExceptionEvent<>(beanClass, identifier);
+                EventBus.GLOBAL.dispatchEvent(event);
+                cancelled = event.isCanceled();
+                returnResult = event.getReturnResult();
+            }
+            if (!cancelled) {
+                throw new ComponentNotFoundException(String.format("Bean %s (%s) is missing", beanClass, identifier));
+            } else {
+                return returnResult;
+            }
         }
     }
 
