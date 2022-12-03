@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "dev.ckateptb.common"
-version = "1.1.4-SNAPSHOT"
+version = "1.1.5-SNAPSHOT"
 
 
 val rootPackage = "${project.group}.${project.name.toLowerCase()}"
