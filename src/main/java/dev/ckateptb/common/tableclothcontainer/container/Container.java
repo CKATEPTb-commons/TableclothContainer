@@ -6,7 +6,6 @@ import dev.ckateptb.common.tableclothcontainer.annotation.Component;
 import dev.ckateptb.common.tableclothcontainer.annotation.PostConstruct;
 import dev.ckateptb.common.tableclothcontainer.annotation.Qualifier;
 import dev.ckateptb.common.tableclothcontainer.event.ComponentRegisterEvent;
-import dev.ckateptb.common.tableclothcontainer.event.ThrowComponentNotFoundExceptionEvent;
 import dev.ckateptb.common.tableclothcontainer.exception.CircularException;
 import dev.ckateptb.common.tableclothcontainer.exception.ComponentConstructorNotFoundException;
 import dev.ckateptb.common.tableclothcontainer.exception.ComponentNotFoundException;
@@ -107,19 +106,7 @@ public class Container {
                     .filter(beanComponent -> beanComponent.getIdentifier().equals(identifier))
                     .findFirst().map(BeanComponent::getInstance).orElseThrow();
         } catch (NullPointerException | NoSuchElementException exception) {
-            T returnResult = null;
-            boolean cancelled = false;
-            if (tableclothEventIsPresent) {
-                ThrowComponentNotFoundExceptionEvent<T> event = new ThrowComponentNotFoundExceptionEvent<>(this, beanClass, identifier);
-                EventBus.GLOBAL.dispatchEvent(event);
-                cancelled = event.isCanceled();
-                returnResult = event.getReturnResult();
-            }
-            if (!cancelled) {
-                throw new ComponentNotFoundException(String.format("Bean %s (%s) is missing", beanClass, identifier));
-            } else {
-                return returnResult;
-            }
+            throw new ComponentNotFoundException(String.format("Bean %s (%s) is missing", beanClass, identifier));
         }
     }
 
@@ -185,12 +172,6 @@ public class Container {
         CircularPreventTree<Class<?>> tree = new CircularPreventTree<>(parentClass, clazz, identifier);
         String finalIdentifier = identifier;
         tree.setNewInstanceGenerator(self -> {
-            // Необходимо для регистрации из ивента
-            try {
-                Object bean = this.getBean(clazz, finalIdentifier);
-                if(bean != null) return bean;
-            } catch (ComponentNotFoundException ignored) {
-            }
             if (this.containsBean(clazz, finalIdentifier)) return this.getBean(clazz, finalIdentifier);
             Set<CircularPreventTree<?>> childCircularPreventTree = self.getChildCircularPreventTree();
             Constructor<?> defaultConstructor = this.getDefaultConstructor(clazz);
