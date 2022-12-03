@@ -185,6 +185,12 @@ public class Container {
         CircularPreventTree<Class<?>> tree = new CircularPreventTree<>(parentClass, clazz, identifier);
         String finalIdentifier = identifier;
         tree.setNewInstanceGenerator(self -> {
+            // Необходимо для регистрации из ивента
+            try {
+                Object bean = this.getBean(clazz, finalIdentifier);
+                if(bean != null) return bean;
+            } catch (ComponentNotFoundException ignored) {
+            }
             if (this.containsBean(clazz, finalIdentifier)) return this.getBean(clazz, finalIdentifier);
             Set<CircularPreventTree<?>> childCircularPreventTree = self.getChildCircularPreventTree();
             Constructor<?> defaultConstructor = this.getDefaultConstructor(clazz);
@@ -199,10 +205,12 @@ public class Container {
                 if (childCircularPreventTree.add(tree1)) {
                     this.declareNewInstanceGenerator(parameterType, qualifier, clazz);
                     childCircularPreventTree.remove(tree1);
-                    childCircularPreventTree.add(this.circularPreventTree.get(parameterType)
-                            .stream().filter(classCircularPreventTree ->
-                                    classCircularPreventTree.getCurrent().equals(parameterType)
-                                            && classCircularPreventTree.getIdentifier().equals(qualifier)).findFirst().orElseThrow());
+                    if (this.circularPreventTree.containsKey(parameterType)) {
+                        childCircularPreventTree.add(this.circularPreventTree.get(parameterType)
+                                .stream().filter(classCircularPreventTree ->
+                                        classCircularPreventTree.getCurrent().equals(parameterType)
+                                                && classCircularPreventTree.getIdentifier().equals(qualifier)).findFirst().orElseThrow());
+                    }
                 }
             }
             self.validateNotCircular();
