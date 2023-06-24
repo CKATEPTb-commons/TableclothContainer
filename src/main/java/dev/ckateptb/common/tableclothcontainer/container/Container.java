@@ -34,7 +34,7 @@ public class Container {
     }
 
     public void scan(Class<?> owner, Predicate<String> filter, String... packages) {
-        this.scan(owner, filter, this.getClass().getClassLoader(), packages);
+        this.scan(owner, filter, null, packages);
     }
 
     @SneakyThrows
