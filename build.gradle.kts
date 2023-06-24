@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "dev.ckateptb.common"
-version = "1.1.6-SNAPSHOT"
+version = "2.0.0-SNAPSHOT"
 
 
 val rootPackage = "${project.group}.${project.name.toLowerCase()}"
@@ -29,8 +29,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly("dev.ckateptb.common:TableclothEvent:+")
-    implementation("com.google.guava:guava:31.1-jre")
+    compileOnly("dev.ckateptb.common:TableclothEvent:1.0.1-SNAPSHOT")
+    implementation("com.google.guava:guava:32.0.1-jre")
+    implementation("org.picocontainer:picocontainer:2.15")
 
     compileOnly("org.projectlombok:lombok:1.18.22")
     annotationProcessor("org.projectlombok:lombok:1.18.22")
